@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Rosa</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="calculator">
+        <div class="display" id="display">0</div>
+        <div class="buttons">
+            <button onclick="appendNumber('7')">7</button>
+            <button onclick="appendNumber('8')">8</button>
+            <button onclick="appendNumber('9')">9</button>
+            <button class="operator" onclick="chooseOperation('/')">÷</button>
+            <button onclick="appendNumber('4')">4</button>
+            <button onclick="appendNumber('5')">5</button>
+            <button onclick="appendNumber('6')">6</button>
+            <button class="operator" onclick="chooseOperation('*')">×</button>
+            <button onclick="appendNumber('1')">1</button>
+            <button onclick="appendNumber('2')">2</button>
+            <button onclick="appendNumber('3')">3</button>
+            <button class="operator" onclick="chooseOperation('-')">−</button>
+            <button onclick="appendNumber('0')">0</button>
+            <button onclick="appendDot()">.</button>
+            <button class="clear" onclick="clearDisplay()">C</button>
+            <button class="operator" onclick="chooseOperation('+')">+</button>
+            <button class="equals" onclick="compute()">=</button>
+        </div>
+    </div>
+    <script>
+        let currentOperand = '';
+        let previousOperand = '';
+        let operation = undefined;
+        const display = document.getElementById('display');
+
+        function appendNumber(number) {
+            if (number === '0' && currentOperand === '0') return;
+            if (currentOperand.length > 12) return;
+            if (number === '.' && currentOperand.includes('.')) return;
+            currentOperand = currentOperand.toString() + number.toString();
+            updateDisplay();
+        }
+
+        function appendDot() {
+            if (currentOperand.includes('.')) return;
+            if (currentOperand === '') currentOperand = '0';
+            currentOperand += '.';
+            updateDisplay();
+        }
+
+        function chooseOperation(op) {
+            if (currentOperand === '' && previousOperand === '') return;
+            if (previousOperand !== '') {
+                compute();
+            }
+            operation = op;
+            previousOperand = currentOperand;
+            currentOperand = '';
+        }
+
+        async function compute() {
+            const prev = parseFloat(previousOperand);
+            const current = parseFloat(currentOperand);
+            if (isNaN(prev) || isNaN(current) || !operation) return;
+            try {
+                const response = await fetch('http://localhost:5000/calcular', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        op1: prev,
+                        op2: current,
+                        operacion: operation
+                    })
+                });
+                const data = await response.json();
+                if (data.resultado !== undefined) {
+                    currentOperand = data.resultado.toString();
+                } else if (data.error) {
+                    currentOperand = 'Error';
+                }
+            } catch (e) {
+                currentOperand = 'Error';
+            }
+            operation = undefined;
+            previousOperand = '';
+            updateDisplay();
+        }
+
+        function clearDisplay() {
+            currentOperand = '';
+            previousOperand = '';
+            operation = undefined;
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            display.textContent = currentOperand || previousOperand || '0';
+        }
+    </script>
+</body>
+</html>
