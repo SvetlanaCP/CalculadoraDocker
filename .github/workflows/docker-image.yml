@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-push:
+  build-test-and-push:
     runs-on: ubuntu-latest
 
     steps:
@@ -41,6 +41,11 @@ jobs:
       - name: Build Docker image
         run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mi-flask-app:latest .
 
-      # 5. Subir la imagen a Docker Hub
+      # 5. Ejecutar tests dentro del contenedor Docker
+      - name: Run tests inside Docker container
+        run: |
+          docker run --rm ${{ secrets.DOCKERHUB_USERNAME }}/mi-flask-app:latest pytest
+
+      # 6. Subir la imagen a Docker Hub
       - name: Push Docker image
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/mi-flask-app:latest
